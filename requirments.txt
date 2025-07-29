@@ -2,6 +2,7 @@ requests[socks]==2.31.0
 beautifulsoup4==4.12.3
 nltk==3.8.1
 pandas==2.2.2
+numpy==1.26.4
 scikit-learn==1.4.2
 xgboost==2.0.3
 catboost==1.2.5
