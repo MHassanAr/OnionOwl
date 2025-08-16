@@ -4,10 +4,16 @@ from playwright.async_api import async_playwright
 from lxml import html as lxml_html, etree
 
 PROXY_SERVER = "socks5://127.0.0.1:9050"
-REMOVE_TAGS = ['script', 'style', 'meta', 'link', 'iframe', 'noscript', 'nav', 'header', 'footer']
-AD_KEYWORDS = ['ad', 'ads', 'sponsor', 'tracked', 'banner', 'cookie', 'popup']
+REMOVE_TAGS = [
+    'script', 'style', 'meta', 'link',
+    'iframe', 'noscript', 'nav', 'header', 'footer'
+]
+AD_KEYWORDS = [
+    'ad', 'ads', 'sponsor', 'tracked', 'banner', 'cookie', 'popup'
+]
 
 def remove_unwanted_inside(element):
+    # Remove all unwanted tags (including any <style> tags nested anywhere)
     for tag in REMOVE_TAGS:
         for el in element.xpath(f'.//{tag}'):
             el.drop_tree()
@@ -18,8 +24,14 @@ def remove_unwanted_inside(element):
         ):
             el.drop_tree()
 
+def remove_inline_styles(element):
+    # Recursively remove 'style' attribute from this element and all descendants
+    if "style" in element.attrib:
+        del element.attrib["style"]
+    for child in element:
+        remove_inline_styles(child)
+
 def remove_empty_tags(element):
-    # Remove empty tags (except for tags that can have meaningful whitespace/tails)
     for el in list(element):
         remove_empty_tags(el)
     for el in list(element):
@@ -70,8 +82,8 @@ def get_minified_chunks(raw_html):
     divs = find_main_divs(tree)
     chunks = []
     for el in divs:
-        # Clean in place: DO NOT reparse!
-        remove_unwanted_inside(el)
+        remove_unwanted_inside(el)      # Remove unwanted tags (including <style>)
+        remove_inline_styles(el)        # Remove style="..." attributes from all tags
         remove_empty_tags(el)
         chunk_html = etree.tostring(el, encoding='unicode', method='html', with_tail=False)
         minified = minify_html(chunk_html)
